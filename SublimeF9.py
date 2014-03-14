@@ -7,45 +7,34 @@ def next_char_pos(view, i, j):
 		i += 1
 	return i
 
+def next_char(view, i, j):
+	k = next_char_pos(view, i, j)
+	if k == j:
+		c = 0
+	else:
+		c = view.substr(k)
+		k += 1
+	return c, k
+
 def diff(view_a, na, ja, da, view_b, nb, ib, jb, j, d, s, n):
 	ja = da
 	if ja != na:
-		ka = next_char_pos(view_a, ja, na)
-		if ka == na:
-			s[0] = 0
-		else:
-			s[0] = view_a.substr(ka)
-			ka += 1
+		s[0], ka = next_char(view_a, ja, na)
 		da = ka;
 		i = 1
 		while i != n:
-			ka = next_char_pos(view_a, ka, na)
-			if ka == na:
-				s[i] = 0
-			else:
-				s[i] = view_a.substr(ka)
-				ka += 1
+			s[i], ka = next_char(view_a, ka, na)
 			i += 1
 		i = 0
 		kb = ib
 		while (j != n) and (i != d) and (kb != nb):
 			jb = kb
-			kb = next_char_pos(view_b, kb, nb)
-			if kb == nb:
-				cb = 0
-			else:
-				cb = view_b.substr(kb)
-				kb += 1
+			cb, kb = next_char(view_b, kb, nb)
 			if cb == s[0]:
 				p = kb
 				j = 0
 				while (j != n) and (cb == s[j]):
-					kb = next_char_pos(view_b, kb, nb)
-					if kb == nb:
-						cb = 0
-					else:
-						cb = view_b.substr(kb)
-						kb += 1
+					cb, kb = next_char(view_b, kb, nb)
 					j += 1
 				kb = p
 			i += 1

@@ -1,3 +1,5 @@
+# Copyright (c) 1994 - 2014 Oberon microsystems, Inc., Switzerland.
+
 import sublime, sublime_plugin
 
 view_b = None

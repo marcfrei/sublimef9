@@ -1,6 +1,6 @@
-# Copyright (c) 1994 - 2014 Oberon microsystems, Inc., Switzerland.
+# Copyright (c) 1994 - 2021 Oberon microsystems, Inc., Switzerland.
 
-import sublime, sublime_plugin
+import time, sublime, sublime_plugin
 
 view_b = None
 
@@ -56,7 +56,8 @@ def compare_views(view_a, pos_a, view_b, pos_b):
 	j = 0
 	n = 32
 	s = [0] * n
-	while (j != n) and ((ja != na) or (jb != nb)):
+	t = time.monotonic()
+	while (j != n) and ((ja != na) or (jb != nb)) and (time.monotonic() - t < 10):
 		ja, da, jb, j = diff(view_a, na, ja, da, view_b, nb, ib, jb, j, d, s, n)
 		d += 1
 		if j != n:

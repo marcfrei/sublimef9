@@ -1,0 +1,106 @@
+(**
+	Reference source code from BlackBox Component Builder
+
+	Copyright (c) 1994 - 2021 Oberon microsystems, Inc., Switzerland.
+**)
+
+IMPORT
+	Kernel, Views, Containers, Windows,
+	TextModels, TextViews, TextControllers;
+
+CONST
+	N = 32; T = 10;
+
+PROCEDURE NextChar (r: TextModels.Reader): CHAR;
+	VAR ch: CHAR;
+BEGIN
+	REPEAT r.ReadChar(ch) UNTIL (ch > " ") OR r.eot;
+	RETURN ch
+END NextChar;
+
+PROCEDURE CompTexts (ta, tb: TextModels.Model; VAR sa, sb, ea, eb: INTEGER);
+	VAR da, db, d, i, j, p: INTEGER; t: LONGINT; ra, rb: TextModels.Reader;
+		cha, chb: CHAR; s: ARRAY N OF CHAR;
+BEGIN
+	ra := ta.NewReader(NIL); ra.SetPos(ea);
+	rb := tb.NewReader(NIL); rb.SetPos(eb);
+	REPEAT
+		cha := NextChar(ra); chb := NextChar(rb)
+	UNTIL (cha # chb) OR ra.eot OR rb.eot;
+	IF ra.eot THEN sa := ra.Pos() ELSE sa := ra.Pos() - 1 END;
+	IF rb.eot THEN sb := rb.Pos() ELSE sb := rb.Pos() - 1 END;
+	t := Kernel.Time() + T * Kernel.timeResolution;
+	da := sa + 1; db := sb + 1; d := 1; j := 0;
+	REPEAT
+		ea := da;
+		IF ea < ta.Length() THEN
+			ra.SetPos(ea); s[0] := NextChar(ra);
+			da := ra.Pos(); i := 1;
+			WHILE i < N DO s[i] := NextChar(ra); INC(i) END;
+			i := 0; rb.SetPos(sb);
+			REPEAT
+				eb := rb.Pos(); chb := NextChar(rb);
+				IF chb = s[0] THEN
+					p := rb.Pos(); j := 0;
+					WHILE (j < N) & (chb = s[j]) DO chb := NextChar(rb); INC(j) END;
+					rb.SetPos(p)
+				END;
+				INC(i)
+			UNTIL (j = N) OR (i = d) OR rb.eot
+		END;
+		INC(d);
+		IF j < N THEN
+			eb := db;
+			IF eb < tb.Length() THEN
+				rb.SetPos(eb); s[0] := NextChar(rb);
+				db := rb.Pos(); i := 1;
+				WHILE i < N DO s[i] := NextChar(rb); INC(i) END;
+				i := 0; ra.SetPos(sa);
+				REPEAT
+					ea := ra.Pos(); cha := NextChar(ra);
+					IF cha = s[0] THEN
+						p := ra.Pos(); j := 0;
+						WHILE (j < N) & (cha = s[j]) DO cha := NextChar(ra); INC(j) END;
+						ra.SetPos(p)
+					END;
+					INC(i)
+				UNTIL (j = N) OR (i = d) OR ra.eot
+			END
+		END
+	UNTIL (j = N) OR (ea >= ta.Length()) & (eb >= tb.Length()) OR (Kernel.Time() > t);
+	IF j < N THEN ea := ta.Length(); eb := tb.Length() END
+END CompTexts;
+
+PROCEDURE Compare*;
+	VAR wa, wb: Windows.Window; va, vb: Views.View; ca, cb: Containers.Controller; sa, sb, ea, eb: INTEGER;
+BEGIN
+	wa := Windows.dir.First();
+	IF wa # NIL THEN
+		wb := Windows.dir.Next(wa);
+		IF wb # NIL THEN
+			va := wa.doc.ThisView();
+			WITH va: TextViews.View DO
+				vb := wb.doc.ThisView();
+				WITH vb: TextViews.View DO
+					ca := va.ThisController();
+					WITH ca: TextControllers.Controller DO
+						cb := vb.ThisController();
+						WITH cb: TextControllers.Controller DO
+							ca.GetSelection(sa, ea);
+							IF (* ea = -1 *) sa = ea THEN ea := MAX(0, ca.CaretPos()) END;
+							cb.GetSelection(sb, eb);
+							IF (* eb = -1 *) sb = eb THEN eb := MAX(0, cb.CaretPos()) END;
+							CompTexts(va.ThisModel(), vb.ThisModel(), sa, sb, ea, eb);
+							IF ea > sa THEN ca.SetSelection(sa, ea) ELSE ca.SetCaret(sa) END;
+							IF eb > sb THEN cb.SetSelection(sb, eb) ELSE cb.SetCaret(sb) END;
+							va.ShowRangeIn(Views.ThisFrame(wa.frame, va), sa, ea);
+							vb.ShowRangeIn(Views.ThisFrame(wb.frame, vb), sb, eb)
+						END
+					END
+				ELSE
+				END
+			ELSE
+			END
+		END
+	END
+END Compare;
